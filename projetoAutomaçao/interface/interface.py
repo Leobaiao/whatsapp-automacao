@@ -24,15 +24,15 @@ aparencia_botao= {
 }
 
 def executar():
-    label.config(text="EXECUTANDO")
+    label.config(text="EXECUTANDO ✔️")
 def executarTD ():
-    label.config(text="EXECUTANDO TODOS")
+    label.config(text="EXECUTANDO TODOS ⭐")
 def wireless():
     label.config(text="CONECTANDO 📡")
 def verificarSF ():
     label.config(text="VERIFICANDO🔍")
 def limpar():  # Função chamada ao clicar no botão
-        label.config(text="LIMPO ✅")
+        label.config(text="LIMPO 🗑️")
 
 
 label = tk.Label(container,text="Conecte o celular para executar o recadastro 🔃")  # Cria um rótulo com texto
