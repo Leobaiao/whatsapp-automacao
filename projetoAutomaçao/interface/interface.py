@@ -5,41 +5,84 @@ janela = tk.Tk()                          # Cria uma janela
 janela.title('central de Recadastro')
 janela.geometry('600x400')
 
+container = tk.Frame(janela, bg="#f0f0f0")
+container.place(relx=0.5, rely=0.5, anchor="center")
+
 #adiconando a imagem a interface
 fundo = tk.PhotoImage(file="ALT360_logo.png")
-fundo_label = tk.Label(janela, image=fundo)
-fundo_label.place(x=0, y=0, relwidth=1, relheight=1)
+logo = tk.Label(container, image=fundo, bg="#f0f0f0")
+logo.grid(row=1, column=0, columnspan=2, pady=(0, 20))
 
-def botao_clicado():                    # Função chamada ao clicar no botão
-    label.config(text="FEITO ✅")
+#aparencia dos botoes
+aparencia_botao= {
+    "bg": "#EF4036",   #cor do botao
+    "fg":"white",     #cor da fonte
+    "font":("helvetica", 10, "bold"),     #escolha da fonte
+    "relief":"groove",    #borda do botao
+    "width":12,
+    "height":1
+}
+
+def executar():
+    label.config(text="EXECUTANDO")
+def executarTD ():
+    label.config(text="EXECUTANDO TODOS")
+def wireless():
+    label.config(text="CONECTANDO 📡")
+def verificarSF ():
+    label.config(text="VERIFICANDO🔍")
+def limpar():  # Função chamada ao clicar no botão
+        label.config(text="LIMPO ✅")
 
 
+label = tk.Label(container,text="Conecte o celular para executar o recadastro 🔃")  # Cria um rótulo com texto
+label.grid (row=0, column=0, columnspan=2, pady=(10,20))
 
-
-label = tk.Label(janela,text="Conecte o celular para executar o recadastro 🔃")  # Cria um rótulo com texto
-font=("Arial", 20, "bold")
 
 
 
 #estilizando o botão
 
-botao = tk.Button(
-    janela,
-    text="RECADASTRO",
-    command=botao_clicado,
-    bg="#EF4036",   #cor do botao
-    fg="white",     #cor da fonte
-    font=("helvetica", 20, "bold"),     #escolha da fonte
-    relief="groove",    #borda do botao
-    bd =3,  #Espessura da borda
-    padx=10,    #padding horizontal interno
-    pady=10,     #padding vertical interno
-    width=12, height=1 #se eu tiver que explicar isso eu prefiro botar meu teclado no rabo
+BTexec = tk.Button(
+    container,
+    text="EXECUTAR",
+    command=executar,
+    **aparencia_botao
 )
+BTexec.grid(row=2, column=0, padx=10, pady=5)
 
-botao.pack(side="bottom", pady=50) #posicionamento empilhando automaticamente
+BTexecTD = tk.Button(
+    container,
+    text="EX. TUDO",
+    command=executarTD,
+    **aparencia_botao
+)
+BTexecTD.grid(row=2, column=1, padx=10, pady=5)
+
+BTwireless = tk.Button (
+    container,
+    text ="WIRELESS",
+    command=wireless,
+    **aparencia_botao
+)
+BTwireless.grid(row=3, column=0, padx=10, pady=5)
+
+BTverificar = tk.Button (container,
+    text="VERIFICAR",
+    command=verificarSF,
+    **aparencia_botao
+)
+BTverificar.grid(row=3, column=1, padx=10, pady=5)
+
+BTlimpar = tk.Button (container,
+    text="LIMPAR",
+    command=limpar,
+    **aparencia_botao)
+BTlimpar.grid(row=4, column=0, columnspan=2, pady=(15, 10))
 
 
-botao.pack()                               # Adiciona o botão à janela
+
+
+
 
 janela.mainloop()                          # Inicia a interface
