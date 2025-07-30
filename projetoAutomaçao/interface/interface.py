@@ -19,8 +19,15 @@ aparencia_botao= {
     "fg":"white",     #cor da fonte
     "font":("helvetica", 10, "bold"),     #escolha da fonte
     "relief":"groove",    #borda do botao
-    "width":12,
-    "height":1
+}
+
+#aparencia LOG
+
+aparencia_LOG ={
+    "fg":"black",
+    "font":("Arial", 20, "italic"),
+
+
 }
 
 def executar():
@@ -33,6 +40,7 @@ def verificarSF ():
     label.config(text="VERIFICANDO🔍")
 def limpar():  # Função chamada ao clicar no botão
         label.config(text="LIMPO 🗑️")
+
 
 
 label = tk.Label(container,text="Conecte o celular para executar o recadastro 🔃")  # Cria um rótulo com texto
@@ -80,6 +88,13 @@ BTlimpar = tk.Button (container,
     **aparencia_botao)
 BTlimpar.grid(row=4, column=0, columnspan=2, pady=(15, 10))
 
+#adiconando um LOG para a interface
+
+LOG = tk.Entry (
+    container,
+    **aparencia_LOG
+)
+LOG.grid(row=5, column=0, columnspan=2, pady=(20,15))
 
 
 
