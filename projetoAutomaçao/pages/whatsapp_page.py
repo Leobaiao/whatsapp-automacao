@@ -6,6 +6,7 @@ from until.retries import *
 import re
 import subprocess
 
+from until.waits import esperar_elemento_visivel
 
 
 class WhatsAppPage:

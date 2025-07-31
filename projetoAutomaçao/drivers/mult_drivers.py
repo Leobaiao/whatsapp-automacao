@@ -7,6 +7,9 @@ from appium import webdriver
 from concurrent.futures import ThreadPoolExecutor
 from pages.whatsapp_page import *
 
+from pages.whatsapp_page import *
+from until.waits import *
+
 
 def pegar_udids():
     result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
