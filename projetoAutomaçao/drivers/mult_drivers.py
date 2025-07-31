@@ -9,6 +9,15 @@ from pages.smartphone import SmartphonePage
 from pages.wa_bussines import *
 from pages.whatsapp_page import *
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from pages.whatsapp_page import *
+from until.waits import *
+
+
 # 🔌 Busca os dispositivos conectados via ADB
 def pegar_udids():
     result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
