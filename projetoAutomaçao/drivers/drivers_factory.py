@@ -4,8 +4,8 @@ from appium import webdriver
 from appium.options.android import UiAutomator2Options
 from appium.webdriver.appium_service import AppiumService
 from until.retries import retry
-
-
+from drivers.mult_drivers import *
+porta = porta_livre()
 # 🔌 Busca os dispositivos conectados via ADB
 def pegar_udid():
     result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
@@ -16,7 +16,6 @@ def pegar_udid():
     return udids
 
 
-# 🚀 Criação do driver com tentativas automáticas em caso de falha
 @retry(max_tentativas=3, delay=1)
 def criar_driver(porta, udid):
     options = UiAutomator2Options()
@@ -24,18 +23,18 @@ def criar_driver(porta, udid):
     options.device_name = udid
     options.automation_name = "UiAutomator2"
     options.udid = udid
-    options.app_package = "com.whatsapp"
-    options.app_activity = "com.whatsapp.Main"
+    options.app_package = "com.whatsapp.w4b"
+    options.app_activity = "com.whatsapp.HomeActivity"
     options.auto_grant_permissions = True
 
     print(f"🧩 Criando driver para dispositivo {udid} na porta {porta}...")
 
-    # ⚠️ Corrigir endpoint se usar Appium 2.x com `--base-path /`
     driver = webdriver.Remote(
-        command_executor=f'http://localhost:{porta}/wd/hub',  # /wd/hub não é mais necessário com base-path '/'
+        command_executor=f'http://localhost:{porta}',  # correto com base-path '/'
         options=options
     )
     return driver
+
 
 
 # 🟢 Instância única para controle do serviço Appium
@@ -53,7 +52,7 @@ def appium_server():
             npm=r"C:\Program Files\nodejs\npm.cmd",
             main_script=r"C:\Users\user\AppData\Roaming\npm\node_modules\appium\build\lib\main.js",
             args=[
-                '--port', '4723',
+                '--port', porta,
                 '--base-path', '/',
                 '--use-drivers', 'uiautomator2'
             ]

@@ -11,16 +11,8 @@ class WhatsAppPage:
     def __init__(self, driver):
         self.driver = driver
 
-
-    def abrirDiscador(self):
-        self.driver.press_keycode(3)
-        self.driver.activate_app('com.samsung.android.dialer')
-        dialpad = esperar_elemento_visivel(self.driver, (By.ID, "com.samsung.android.dialer:id/dialpad_spacer_view"))
-        if dialpad:
-            dialpad.click()
-
     @retry(max_tentativas=3, delay=1)
-    def pegarNumero(self, udid):
+    def pegarNumeroChip1(self, udid):
         """
         Tenta obter o número do chip via discador Samsung.
         Retorna o número ou lança exceção em caso de erro.
@@ -67,10 +59,6 @@ class WhatsAppPage:
         except Exception as e:
             raise {e}
             return None
-
-    def fecharDiscador(self):
-        self.driver.terminate_app("com.samsung.android.dialer")
-
 
     def abrirWhatsapp(self):
         try:
@@ -200,7 +188,7 @@ class WhatsAppPage:
         except Exception as e:
             print(f"[verificarChip] Erro: Não verificou o Chip")
 
-                    print(f"[verificarChip] Erro ao aceitar condições: {e}")
+            print(f"[verificarChip] Erro ao aceitar condições: {e}")
             return True
         except Exception as e:
             print(f"[verificarChip] Erro: {e}")

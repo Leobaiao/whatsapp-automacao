@@ -2,7 +2,7 @@ import unittest
 from until.waits import *
 from drivers.drivers_factory import *
 from pages.whatsapp_page import *
-from drivers.mult_drivers import *
+
 
 class TestWhatsAppRegistro(unittest.TestCase):
 
@@ -11,11 +11,11 @@ class TestWhatsAppRegistro(unittest.TestCase):
         try:
             appium_server()
             udid = pegar_udid()
-            driver = criar_driver(4723, udid[0])
+            driver = criar_driver(porta, udid)
 
             whatsapp = WhatsAppPage(driver)
 
-            numero = whatsapp.pegarNumero(udid[0])
+            numero = whatsapp.pegarNumeroChip1(udid)
             whatsapp.abrirWhatsapp()
             whatsapp.selecionar_linguagem()
             whatsapp.clicar_prosseguir()
@@ -62,7 +62,7 @@ class TestWhatsAppRegistro(unittest.TestCase):
 
             whatsapp = WhatsAppPage(driver)
 
-            numero = whatsapp.pegarNumero(udid[0])
+            numero = whatsapp.pegarNumeroChip1(udid[0])
             whatsapp.abrirWhatsapp()
             whatsapp.selecionar_linguagem()
             whatsapp.clicar_prosseguir()

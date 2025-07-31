@@ -9,7 +9,6 @@ from pages.smartphone import SmartphonePage
 from pages.wa_bussines import *
 from pages.whatsapp_page import *
 
-# 🔌 Busca os dispositivos conectados via ADB
 def pegar_udids():
     result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
     lines = result.stdout.strip().split('\n')[1:]
@@ -29,7 +28,6 @@ def gerar_porta_por_udid(udid, base_porta=4723):
     hash_val = abs(hash(udid)) % 1000
     return base_porta + (hash_val * 2)
 
-# ▶️ Inicia o servidor Appium
 def iniciar_appium(porta):
     service = AppiumService()
     service.start(args=[
@@ -46,16 +44,14 @@ def iniciar_appium(porta):
 
     raise RuntimeError(f"❌ Falha ao iniciar Appium na porta {porta}")
 
-# 🚀 Criação do driver com tentativas automáticas em caso de falha
-#@retry(max_tentativas=3, delay=1)
-def criar_drivers_whatsapp(udid, porta):
+def criar_drivers_whatsapp_bussines(udid, porta):
     options = UiAutomator2Options()
     options.platform_name = "Android"
     options.device_name = udid
     options.automation_name = "UiAutomator2"
     options.udid = udid
-    options.app_package = "com.whatsapp"
-    options.app_activity = "com.whatsapp.Main"
+    options.app_package = "com.whatsapp.w4b"
+    options.app_activity = "com.whatsapp.HomeActivity"
     options.auto_grant_permissions = True
 
     print(f"🧩 Criando driver para dispositivo {udid} na porta {porta}...")
@@ -74,35 +70,13 @@ def iniciar_appium_para_udid(udid, porta):
     """
     try:
         service = iniciar_appium(porta)
-        driver = criar_drivers_whatsapp(udid, porta)
+        driver = criar_drivers_whatsapp_bussines(udid, porta)
         return (driver, service)
     except Exception as e:
         print(f"❌ Erro ao iniciar Appium para {udid}: {e}")
         return (None, None)
 
-
-def iniciar_ambiente_para_todos():
-    """
-    Inicia Appium e drivers para todos os dispositivos em paralelo.
-    Retorna lista de tuplas (driver, service).
-    """
-    udids = pegar_udids()
-    drivers_services = []
-
-    with ThreadPoolExecutor(max_workers=len(udids)) as executor:
-        futures = [
-            executor.submit(iniciar_appium_para_udid, udid, gerar_porta_por_udid(udid))
-            for udid in udids
-        ]
-        for future in as_completed(futures):
-            driver_service = future.result()
-            if driver_service[0] and driver_service[1]:
-                drivers_services.append(driver_service)
-
-    return drivers_services
-
-
-def rodar_automacao_whatsapp(driver):
+def rodar_automacao_whatsapp_bussines(driver):
     try:
         print(f"▶️ Iniciando automação no dispositivo: {driver.capabilities['deviceName']}")
         whatsapp = WhatsAppPage(driver)
@@ -139,14 +113,32 @@ def rodar_automacao_whatsapp(driver):
     except Exception as e:
         print(f"❌ Erro no dispositivo {driver.capabilities['deviceName']}: {e}")
 
+def iniciar_ambiente_para_todos():
+    """
+    Inicia Appium e drivers para todos os dispositivos em paralelo.
+    Retorna lista de tuplas (driver, service).
+    """
+    udids = pegar_udids()
+    drivers_services = []
 
+    with ThreadPoolExecutor(max_workers=len(udids)) as executor:
+        futures = [
+            executor.submit(iniciar_appium_para_udid, udid, gerar_porta_por_udid(udid))
+            for udid in udids
+        ]
+        for future in as_completed(futures):
+            driver_service = future.result()
+            if driver_service[0] and driver_service[1]:
+                drivers_services.append(driver_service)
+
+    return drivers_services
 
 if __name__ == "__main__":
     drivers_services = iniciar_ambiente_para_todos()
     drivers = [ds[0] for ds in drivers_services if ds[0] is not None]
 
     with ThreadPoolExecutor(max_workers=len(drivers)) as executor:
-        futures = [executor.submit(rodar_automacao_whatsapp, driver) for driver in drivers]
+        futures = [executor.submit(rodar_automacao_whatsapp_bussines, driver) for driver in drivers]
         for future in as_completed(futures):
             try:
                 future.result()

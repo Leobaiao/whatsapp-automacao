@@ -70,7 +70,7 @@ def executar_paralelo(*funcoes):
         for future in as_completed(futuros):
             try:
                 resultado = future.result()
-                if resultado is True:
+                if resultado:
                     # Cancela os outros
                     for f in futuros:
                         if not f.done():
