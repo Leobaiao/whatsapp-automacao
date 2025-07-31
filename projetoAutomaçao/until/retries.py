@@ -3,11 +3,10 @@ import time
 from functools import wraps
 
 def retry(max_tentativas=3, delay=2, exceptions=(Exception,)):
-    def decorator_retry(func):
+    def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            tentativa = 1
-            while tentativa <= max_tentativas:
+            for tentativa in range(1, max_tentativas + 1):
                 try:
                     return func(*args, **kwargs)
                 except exceptions as e:
@@ -15,6 +14,5 @@ def retry(max_tentativas=3, delay=2, exceptions=(Exception,)):
                     if tentativa == max_tentativas:
                         raise
                     time.sleep(delay)
-                    tentativa += 1
         return wrapper
-    return decorator_retry
+    return decorator

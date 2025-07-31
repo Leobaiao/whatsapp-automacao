@@ -53,12 +53,12 @@ class TestWhatsAppRegistro(unittest.TestCase):
 
     def test_registrar_mult(self):
         try:
-            #appium_server()
+            appium_server()
             udid = pegar_udids()
             porta_livre()
-            #iniciar_appium()
+            iniciar_appium(porta_livre())
 
-            driver = criar_driver(4723, udid[0])
+            driver = criar_driver(porta_livre(), udid)
 
             whatsapp = WhatsAppPage(driver)
 

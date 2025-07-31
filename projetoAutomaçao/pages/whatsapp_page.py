@@ -6,102 +6,137 @@ from until.retries import *
 import re
 import subprocess
 
-from until.waits import esperar_elemento_visivel
-
-
 class WhatsAppPage:
-
+    
     def __init__(self, driver):
         self.driver = driver
 
 
+    def abrirDiscador(self):
+        self.driver.press_keycode(3)
+        self.driver.activate_app('com.samsung.android.dialer')
+        dialpad = esperar_elemento_visivel(self.driver, (By.ID, "com.samsung.android.dialer:id/dialpad_spacer_view"))
+        if dialpad:
+            dialpad.click()
+
+    @retry(max_tentativas=3, delay=1)
     def pegarNumero(self, udid):
+        """
+        Tenta obter o número do chip via discador Samsung.
+        Retorna o número ou lança exceção em caso de erro.
+
+        Nota: Este método utiliza o decorador @retry para tentar novamente até 3 vezes em caso de falha, com 1 segundos de espera entre as tentativas.
+        """
+
         try:
-            self.driver.press_keycode(3)
-            # esperar_elemento_visivel(self.driver, (By.XPATH, '//android.widget.TextView[@content-desc="Telefone"]'))
-            self.driver.activate_app('com.samsung.android.dialer')
-            esperar_elemento_visivel(self.driver, (By.ID, "com.samsung.android.dialer:id/dialpad_spacer_view")).click()
-
             subprocess.run(f'adb -s {udid} shell am start -a android.intent.action.CALL -d tel:*846%23', shell=True)
-            if verificar_elemento_visivel(self.driver,(By.XPATH, "//android.widget.TextView[contains(@text, 'Recarga Facil')]"), 20):
-                campoNumero = esperar_elemento_visivel(self.driver, (By.ID, "android:id/message"))
-                numeros = campoNumero.text
-                print(numeros)
-                numeros = re.findall(r"\[(\d+)]", campoNumero.text)
+            try:
+                escolherChip = esperar_elemento_visivel(self.driver, (By.ID, "com.samsung.android.incallui:id/title"))
+                if escolherChip:
+                    chip1 = esperar_elemento_visivel(self.driver, (By.XPATH, '//android.widget.TextView[@resource-id="com.samsung.android.incallui:id/account_label" and @text="SIM 1"]'))
+                    chip1.click()
+            except:
+                pass
+            mensagem_elem = esperar_elemento_visivel(self.driver, (By.ID, "android:id/message"))
+            mensagem_texto = mensagem_elem.text if mensagem_elem else ""
+            if verificar_elemento_visivel(self.driver, (By.XPATH, "//android.widget.TextView[contains(@text, 'Recarga Facil')]"), 20):
+                numeros = re.findall(r"\[(\d+)]", mensagem_texto)
+                time.sleep(0.5)
                 esperar_elemento_visivel(self.driver, (By.ID, 'android:id/button1')).click()
-                numero = int(numeros[0])
-                print(numero)
-                self.driver.terminate_app("com.samsung.android.dialer")
-                return numero
-            elif esperar_elemento_visivel(self.driver, (By.ID, "android:id/message")).text == 'Problema de conexão ou código MMI inválido.':
-                    print('Numero Cancelado')
-                    esperar_elemento_visivel(self.driver, (By.ID, 'android:id/button1')).click()
-                    raise 'numero cancelado'
-            elif esperar_elemento_visivel(self.driver, (By.ID, "android:id/message")).text == 'UNKNOWN APPLICATION':
-                print('Chip da tim nao identificado')
+                if numeros:
+                    numero = int(numeros[0])
+                    print(f"Número encontrado: {numero}")
+
+                    return numero
+                else:
+                    raise ValueError("Número não encontrado na mensagem.")
+            elif mensagem_texto == 'Problema de conexão ou código MMI inválido.':
+                print('Número cancelado')
                 esperar_elemento_visivel(self.driver, (By.ID, 'android:id/button1')).click()
-                raise 'numero cancelado'
-
-
+                raise RuntimeError('Número cancelado')
+            elif mensagem_texto == 'UNKNOWN APPLICATION':
+                print('Chip da TIM não identificado')
+                esperar_elemento_visivel(self.driver, (By.ID, 'android:id/button1')).click()
+                raise RuntimeError('Chip da TIM não identificado')
+            else:
+                print(f"Mensagem inesperada: {mensagem_texto}")
+                esperar_elemento_visivel(self.driver, (By.ID, 'android:id/button1')).click()
+                print(f"[pegarNumero] Erro: {mensagem_texto}")
 
 
         except Exception as e:
+            raise {e}
+            return None
 
-            print(f"Erro ao pegar numero: {e}")
-
+    def fecharDiscador(self):
+        self.driver.terminate_app("com.samsung.android.dialer")
 
 
     def abrirWhatsapp(self):
-        time.sleep(2)
-        self.driver.activate_app('com.whatsapp')
+        try:
+            time.sleep(2)
+            self.driver.activate_app('com.whatsapp')
+            return True
+        except Exception as e:
+            print(f"[abrirWhatsapp] Erro: {e}")
+            return False
 
     def selecionar_linguagem(self):
         try:
             esperar_elemento_visivel(self.driver, (By.XPATH,
-                                                   '//android.widget.CheckBox[@content-desc="Selecionar (idioma do dispositivo) como idioma do app"]')).click()
+                '//android.widget.CheckBox[@content-desc="Selecionar (idioma do dispositivo) como idioma do app"]')).click()
+            return True
         except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('nao colocou a linguagem')
-            pass
+            print(f"[selecionar_linguagem] Erro: {e}")
+            return False
 
     def clicar_prosseguir(self):
-        esperar_elemento_visivel(self.driver, (By.ID, 'com.whatsapp:id/eula_accept')).click()
+        try:
+            esperar_elemento_visivel(self.driver, (By.ID, 'com.whatsapp:id/eula_accept')).click()
+            return True
+        except Exception as e:
+            print(f"[clicar_prosseguir] Erro: {e}")
+            return False
 
     def inserir_numero(self, numero):
-
-        campo = esperar_elemento_visivel(self.driver, (By.ID, "com.whatsapp:id/registration_phone"))
-        campo.send_keys(numero)
-
-        dd = self.driver.find_element(By.ID, 'com.whatsapp:id/registration_cc')
-        if dd == " ":
-            dd.send_keys('55')
-
-        botao = self.driver.find_element(By.ID, "com.whatsapp:id/registration_submit")
-        botao.click()
-
-        print('colocou o numero')
+        try:
+            campo = esperar_elemento_visivel(self.driver, (By.ID, "com.whatsapp:id/registration_phone"))
+            campo.send_keys(numero)
+            dd = self.driver.find_element(By.ID, 'com.whatsapp:id/registration_cc')
+            if dd.text == " ":
+                dd.send_keys('55')
+            botao = self.driver.find_element(By.ID, "com.whatsapp:id/registration_submit")
+            botao.click()
+            print('colocou o numero')
+            return True
+        except Exception as e:
+            print(f"[inserir_numero] Erro: {e}")
+            return False
 
     def confirmarNumero(self):
-
         try:
             confirmar = esperar_elemento_visivel(self.driver, (By.ID, "android:id/button1"))
             confirmar.click()
             time.sleep(0.5)
-
-
+            return True
         except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('Nao confirmou o numero')
-            pass
+            print(f"[confirmarNumero] Erro: Não Precisou Confirmar o Numero")
+            return False
 
     def verificarBanido(self):
         try:
             elemento = esperar_elemento_visivel(self.driver, (By.ID, 'com.whatsapp:id/action_button'))
             if elemento and elemento.text == 'REGISTRAR NOVO NÚMERO DE TELEFONE':
-                print('Número banido')
-                raise ChipBanidoException("Número banido pelo WhatsApp")
+
+                raise ChipBanidoException("❌ Número banido pelo WhatsApp")
+            return True
+  
         except TimeoutException:
-            print("Não apareceu botão de banimento – ignorando.")
+            print("[verificarBanido] Não apareceu botão de banimento – ignorando.")
+            return False
+        except Exception as e:
+            print(f"[verificarBanido] Erro: {e}")
+            return False
 
     def pedirAnalise(self):
         try:
@@ -111,9 +146,16 @@ class WhatsAppPage:
                 esperar_elemento_visivel(self.driver, (By.ID, 'com.whatsapp:id/submit_button')).click()
                 time.sleep(0.5)
                 esperar_elemento_visivel(self.driver, (By.ID, 'com.whatsapp:id/submit_button')).click()
-                raise ChipEmAnaliseException("Chip em processo de análise")
+
+                raise ChipEmAnaliseException("❌ Chip em processo de análise")
+            return True
+
         except TimeoutException:
-            print("Não apareceu botão 'PEDIR ANÁLISE' – ignorando.")
+            print("[pedirAnalise] Não apareceu botão 'PEDIR ANÁLISE' – ignorando.")
+            return False
+        except Exception as e:
+            print(f"[pedirAnalise] Erro: {e}")
+            return False
 
     def verificarAnalise(self):
         try:
@@ -122,42 +164,48 @@ class WhatsAppPage:
                 elemento.click()
                 analise = esperar_elemento_visivel(self.driver, (By.ID, 'com.whatsapp:id/appeal_submitted_heading'))
                 print(analise.text)
-                raise ChipEmAnaliseException("Chip já em análise")
+
+                raise ChipEmAnaliseException("❌ Chip já em análise")
+            return True
+
         except TimeoutException:
-            print("Não apareceu botão de status de análise – ignorando.")
+            print("[verificarAnalise] Não apareceu botão de status de análise – ignorando.")
+            return False
+        except Exception as e:
+            print(f"[verificarAnalise] Erro: {e}")
+            return False
 
     def verificarChip(self):
         try:
-            tipoderecebimento = verificar_elemento_visivel(self.driver,
-                                                         (By.ID, 'com.whatsapp:id/entire_content_holder'))
+
+            tipoderecebimento = esperar_elemento_visivel(self.driver, (By.ID, 'com.whatsapp:id/entire_content_holder'))
+
             if tipoderecebimento:
                 esperar_elemento_visivel(self.driver, (By.ID, 'com.whatsapp:id/secondary_button')).click()
                 try:
                     esperar_elemento_visivel(self.driver, (By.XPATH,
-                                                           '(//android.widget.RadioButton[@resource-id="com.whatsapp:id/reg_method_checkbox"])[2]')).click()
+                        '(//android.widget.RadioButton[@resource-id="com.whatsapp:id/reg_method_checkbox"])[2]')).click()
                     esperar_elemento_visivel(self.driver, (By.ID, 'com.whatsapp:id/continue_button')).click()
                 except Exception as e:
-                    print(f"Erro ao selecionar linguagem: {e}")
-                    print('nao foi possivel pedir sms')
-                    pass
-
+                    print(f"[verificarChip] Erro ao pedir SMS: {e}")
                 try:
                     esperar_elemento_visivel(self.driver, (By.ID,
-                                                           'com.android.permissioncontroller:id/permission_allow_button')).click()
+                        'com.android.permissioncontroller:id/permission_allow_button')).click()
                     esperar_elemento_visivel(self.driver, (By.ID,
-                                                           'com.android.permissioncontroller:id/permission_allow_button')).click()
+                        'com.android.permissioncontroller:id/permission_allow_button')).click()
                 except Exception as e:
-                    print(f"Erro ao verificar chip: {e}")
-                    print('nao aceitou as condicoes')
-                    pass
 
-
-
+                    print(f"[verificarChip] Erro ao aceitar condições: Não verificou o Chip")
+            return True
         except Exception as e:
+            print(f"[verificarChip] Erro: Não verificou o Chip")
 
-            print('Nao verificou o chip')
-            pass
+                    print(f"[verificarChip] Erro ao aceitar condições: {e}")
+            return True
+        except Exception as e:
+            print(f"[verificarChip] Erro: {e}")
 
+            return False
 
     def abrirAppMensagens(self):
         try:
@@ -165,129 +213,105 @@ class WhatsAppPage:
             self.driver.activate_app('com.samsung.android.messaging')
             print('abriu o app')
             return True
-        except:
-            print('nao abriu o app de mensagem')
-            pass
-
+        except Exception as e:
+            print(f"[abrirAppMensagens] Erro: Não Abriu o App De Mensagem ")
+            return False
 
     def pegarCodigoSms(self):
         try:
-            # Localiza o elemento que contém a mensagem com o código de verificação
             esperar_elemento_visivel(self.driver, (By.XPATH,
-                                                   '(//android.widget.LinearLayout[@resource-id="com.samsung.android.messaging:id/card_view_sub_layout"])[1]')).click()
-
-            # Busca pela mensagem que contém o código de verificação
+                '(//android.widget.LinearLayout[@resource-id="com.samsung.android.messaging:id/card_view_sub_layout"])[1]')).click()
             esperar_elemento_visivel(self.driver,
-                                     (By.XPATH, "//android.widget.LinearLayout[contains(@content-desc, 'WhatsApp')]"))
+                (By.XPATH, "//android.widget.LinearLayout[contains(@content-desc, 'WhatsApp')]"))
             mensagens = self.driver.find_elements(By.XPATH,
-                                                  "//android.widget.LinearLayout[contains(@content-desc, 'WhatsApp')]")
-            # Se houver mensagens que correspondem ao critério
+                "//android.widget.LinearLayout[contains(@content-desc, 'WhatsApp')]")
             if mensagens:
-                # Pegue a última mensagem que contém "Código do WhatsApp"
                 ultima_mensagem = mensagens[-1]
-
-                # Extraímos o texto ou o content-desc dessa última mensagem
                 codigoCompleto = ultima_mensagem.get_attribute('content-desc')
-
                 padrao = r'(\d+)-(\d+)'
-
                 resultado = re.search(padrao, codigoCompleto)
-
                 codigo = resultado.group(1) + resultado.group(2)
-
                 self.driver.terminate_app("com.samsung.android.messaging")
-
-            print('pegou o codigo')
-            return codigo
+                print('pegou o codigo')
+                return codigo
+            print('[pegarCodigoSms] Nenhuma mensagem encontrada.')
+            return None
         except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('nao precisou pegar o codigo')
-            pass
-
+            print(f"[pegarCodigoSms] Erro: {e}")
+            return None
 
     def voltarWhatsapp(self):
         try:
             self.driver.activate_app("com.whatsapp")
             campo = esperar_elemento_visivel(self.driver, (By.ID, "com.whatsapp:id/verify_sms_code_input")).click()
             print('voltou')
+            return True
         except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('nao precisou voltar')
-            pass
-
+            print(f"[voltarWhatsapp] Erro: {e}")
+            return False
 
     def inserir_codigo_sms(self, codigo):
         try:
             esperar_elemento_visivel(self.driver, (By.ID, "com.whatsapp:id/verify_sms_code_input")).send_keys(codigo)
             print('colocou o codigo')
+            return True
         except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('nao colocou o codigo')
-            pass
-
+            print(f"[inserir_codigo_sms] Erro: {e}")
+            return False
 
     def concluir_perfil(self):
         try:
             esperar_elemento_visivel(self.driver, (By.ID, "com.whatsapp:id/submit")).click()
             print('clicou em aceitou')
-
-
+            try:
+                permissao = verificar_elemento_visivel(self.driver, (By.ID,
+                    'com.android.permissioncontroller:id/permission_allow_button'))
+                if permissao:
+                    esperar_elemento_visivel(self.driver,
+                        (By.ID, "com.android.permissioncontroller:id/permission_allow_button")).click()
+                    time.sleep(1)
+                    esperar_elemento_visivel(self.driver,
+                        (By.ID, "com.android.permissioncontroller:id/permission_allow_button")).click()
+                    time.sleep(1)
+                    esperar_elemento_visivel(self.driver,
+                        (By.ID, "com.android.permissioncontroller:id/permission_allow_button")).click()
+                print('aceitou as permissoes')
+            except Exception as e:
+                print(f"[concluir_perfil] Erro ao aceitar notificações: {e}")
+            return True
         except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('nao clicou ')
-            pass
 
-        try:
-            permissao = verificar_elemento_visivel(self.driver, (By.ID,
-                                                                 'com.android.permissioncontroller:id/permission_allow_button'))
+            print(f"[concluir_perfil] Erro: Erro ao Concluir perfil")
 
-            if permissao:
-                esperar_elemento_visivel(self.driver,
-                                         (By.ID, "com.android.permissioncontroller:id/permission_allow_button")).click()
-                time.sleep(1)
-                esperar_elemento_visivel(self.driver,
-                                         (By.ID, "com.android.permissioncontroller:id/permission_allow_button")).click()
-                time.sleep(1)
-                esperar_elemento_visivel(self.driver,
-                                         (By.ID, "com.android.permissioncontroller:id/permission_allow_button")).click()
-            print('aceitou as permissoes')
-
-
-        except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('nao aceitou as notificações')
-            pass
-
+            return False
 
     def aceitarPermissao(self):
         try:
             esperar_elemento_visivel(self.driver, (By.ID, "android:id/button2")).click()
             print('negou o backup')
+            return True
         except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('nao negou o backup')
-            pass
-
+            print(f"[aceitarPermissao] Erro: Não Aceitou as Permissoes")
+            return False
 
     def colocarNome(self):
         try:
             campo_nome = esperar_elemento_visivel(self.driver, (By.ID, "com.whatsapp:id/registration_name"))
             campo_nome.send_keys("Call Center")
             print("colocou o nome")
+            return True
         except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('colocou o nome')
-            pass
-
+            print(f"[colocarNome] Erro: Não Colocou o Nome")
+            return False
 
     def finalizarPerfil(self):
         try:
             self.driver.find_element(By.ID, "com.whatsapp:id/register_name_accept").click()
             print('concluiu')
-            if verificar_elemento_visivel(self.driver,(By.ID, 'com.whatsapp:id/secondary_button')):
+            if esperar_elemento_visivel(self.driver,(By.ID, 'com.whatsapp:id/secondary_button')):
                 verificar_elemento_visivel(self.driver,(By.ID, 'com.whatsapp:id/secondary_button')).click()
             time.sleep(10)
+            return True
         except Exception as e:
-            print(f"Erro ao selecionar linguagem: {e}")
-            print('parou no nome')
-            pass
+            print(f"[finalizarPerfil] Erro: Não Finalizou o Perfil")
+            return False
