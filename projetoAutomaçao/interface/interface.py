@@ -1,143 +1,100 @@
-
 import tkinter as tk
-from idlelib.configdialog import font_sample_text
+from tkinter.scrolledtext import ScrolledText
 from threading import Thread
-
-from drivers.mult_drivers import *
-
-from drivers.mult_drivers import iniciar_ambiente_para_todos, rodar_automacao
-
-drivers_services = []
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import sys
+from drivers.drivers_whatsapp_bussines import *
+from drivers.drivers_whatsapp import *
+from wireless.wireless import *
 
-janela = tk.Tk()                          # Cria uma janela
-janela.title('central de Recadastro')
+# Lista de serviços de drivers (caso necessário)
+drivers_services = []
+
+# === Janela principal ===
+janela = tk.Tk()
+janela.title('Central de Recadastro')
 janela.geometry('600x400')
 
+# Container principal
 container = tk.Frame(janela, bg="#f0f0f0")
 container.place(relx=0.5, rely=0.5, anchor="center")
 
-#adiconando a imagem a interface
+# === Logo ===
 fundo = tk.PhotoImage(file="ALT360_logo.png")
 logo = tk.Label(container, image=fundo, bg="#f0f0f0")
 logo.grid(row=1, column=0, columnspan=2, pady=(0, 20))
 
-#aparencia dos botoes
-aparencia_botao= {
-    "bg": "#EF4036",   #cor do botao
-    "fg":"white",     #cor da fonte
-    "font":("helvetica", 10, "bold"),     #escolha da fonte
-    "relief":"groove",    #borda do botao
+# === Aparência dos botões ===
+aparencia_botao = {
+    "bg": "#EF4036",
+    "fg": "white",
+    "font": ("Helvetica", 10, "bold"),
+    "relief": "groove",
 }
 
-#aparencia LOG
-
-aparencia_LOG ={
-    "fg":"black",
-    "font":("Arial", 20, "italic"),
-
-
+# === Aparência do log (opcional, atualmente não utilizado) ===
+aparencia_LOG = {
+    "fg": "black",
+    "font": ("Arial", 20, "italic"),
 }
 
+# === Funções de ação dos botões ===
 def executar():
     label.config(text="WHATSAPP")
+    Thread(target=whatsapp).start()  # Corrigido: não chamar diretamente
 
-    def tarefa():
-        global drivers_services
-        if not drivers_services:
-            drivers_services=iniciar_ambiente_para_todos()
-        driver = drivers_services[0][0]
-        rodar_automacao(driver)
-        Thread(target=tarefa).start()
-
-
-def executartd ():
-    label.config(text="BUSSINESS")
+def executartd():
+    label.config(text="BUSINESS")
+    Thread(target=bussines).start()
+    # Coloque aqui o que a função deve fazer
 
 def wireless():
     label.config(text="CONECTANDO 📡")
+    Thread(target=wireless).start()
+    # Coloque aqui a lógica de conexão wireless
 
+def verificarsf():
+    label.config(text="VERIFICANDO 🔍")
+    Thread(target=pegar_udids).start()
+    # Lógica de verificação
 
+def limpar():
+    label.config(text="LIMPO 🗑️")
+    log_area.configure(state='normal')
+    log_area.delete(1.0, tk.END)
+    log_area.configure(state='disabled')
 
-def executartd ():
-    label.config(text="BUSSINESS")
-
-
-
-def wireless():
-    label.config(text="CONECTANDO 📡")
-
-def verificarsf ():
-    label.config(text="VERIFICANDO🔍")
-
-def limpar():  # Função chamada ao clicar no botão
-        label.config(text="LIMPO 🗑️")
-
-label = tk.Label(container,text="Conecte o celular para executar o recadastro 🔃")  # Cria um rótulo com texto
-label.grid (row=0, column=0, columnspan=2, pady=(10,20))
-
-
-
-
-#estilizando o botão
-
-BTexec = tk.Button(
+# === Label principal ===
+label = tk.Label(
     container,
-    text="WHATSAPP",
-    command=executar,
-    **aparencia_botao
+    text="Conecte o celular para executar o recadastro 🔃"
 )
+label.grid(row=0, column=0, columnspan=2, pady=(10, 20))
+
+# === Botões ===
+BTexec = tk.Button(container, text="WHATSAPP", command=executar, **aparencia_botao)
 BTexec.grid(row=2, column=0, padx=10, pady=5)
 
-BTexectd = tk.Button(
-    container,
-    text="BUSSINESS",
-    command=executartd,
-    **aparencia_botao
-)
+BTexectd = tk.Button(container, text="BUSINESS", command=executartd, **aparencia_botao)
 BTexectd.grid(row=2, column=1, padx=10, pady=5)
 
-BTwireless = tk.Button (
-    container,
-    text ="WIRELESS",
-    command=wireless,
-    **aparencia_botao
-)
+BTwireless = tk.Button(container, text="WIRELESS", command=wireless, **aparencia_botao)
 BTwireless.grid(row=3, column=0, padx=10, pady=5)
 
-BTverificar = tk.Button (container,
-    text="VERIFICAR",
-    command=verificarsf,
-    **aparencia_botao
-)
+BTverificar = tk.Button(container, text="VERIFICAR", command=verificarsf, **aparencia_botao)
 BTverificar.grid(row=3, column=1, padx=10, pady=5)
 
-BTlimpar = tk.Button (container,
-    text="LIMPAR",
-    command=limpar,
-    **aparencia_botao)
+BTlimpar = tk.Button(container, text="LIMPAR", command=limpar, **aparencia_botao)
 BTlimpar.grid(row=4, column=0, columnspan=2, pady=(15, 10))
 
-#adiconando um LOG para a interface
+# === Área de log ===
+log_area = ScrolledText(container, height=10, width=60, state='disabled', bg="#f0f0f0")
+log_area.grid(row=5, column=0, columnspan=2, pady=(20, 15))
 
-from tkinter.scrolledtext import ScrolledText
-log_area=ScrolledText(container, height=10, width=60, state='disabled', bg="#f0f0f0")
-log_area.grid(row=5, column=0, columnspan=2, pady=(20,15))
-
-import sys
-
+# === Redirecionamento de stdout/stderr para log ===
 class TextRedirector:
     def __init__(self, widget):
         self.widget = widget
-
-
-
-import sys
-
-class TextRedirector:
-    def __init__(self, widget):
-        self.widget = widget
-
 
     def write(self, message):
         self.widget.configure(state='normal')
@@ -151,10 +108,5 @@ class TextRedirector:
 sys.stdout = TextRedirector(log_area)
 sys.stderr = TextRedirector(log_area)
 
-
-
-janela.mainloop()                          # Inicia a interface
-
-
-
-
+# === Iniciar interface ===
+janela.mainloop()

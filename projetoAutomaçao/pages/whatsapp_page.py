@@ -23,13 +23,13 @@ class WhatsAppPage:
         try:
             subprocess.run(f'adb -s {udid} shell am start -a android.intent.action.CALL -d tel:*846%23', shell=True)
             try:
-                escolherChip = esperar_elemento_visivel(self.driver, (By.ID, "com.samsung.android.incallui:id/title"))
+                escolherChip = esperar_elemento_visivel(self.driver, (By.ID, "com.samsung.android.incallui:id/title"), 10)
                 if escolherChip:
-                    chip1 = esperar_elemento_visivel(self.driver, (By.XPATH, '//android.widget.TextView[@resource-id="com.samsung.android.incallui:id/account_label" and @text="SIM 1"]'))
+                    chip1 = esperar_elemento_visivel(self.driver, (By.XPATH, '//android.widget.TextView[@resource-id="com.samsung.android.incallui:id/account_label" and @text="SIM 1"]'), 10)
                     chip1.click()
             except:
                 pass
-            mensagem_elem = esperar_elemento_visivel(self.driver, (By.ID, "android:id/message"))
+            mensagem_elem = esperar_elemento_visivel(self.driver, (By.ID, "android:id/message"), 10)
             mensagem_texto = mensagem_elem.text if mensagem_elem else ""
             if verificar_elemento_visivel(self.driver, (By.XPATH, "//android.widget.TextView[contains(@text, 'Recarga Facil')]"), 20):
                 numeros = re.findall(r"\[(\d+)]", mensagem_texto)
@@ -118,7 +118,6 @@ class WhatsAppPage:
 
                 raise ChipBanidoException("❌ Número banido pelo WhatsApp")
             return True
-  
         except TimeoutException:
             print("[verificarBanido] Não apareceu botão de banimento – ignorando.")
             return False
@@ -137,7 +136,6 @@ class WhatsAppPage:
 
                 raise ChipEmAnaliseException("❌ Chip em processo de análise")
             return True
-
         except TimeoutException:
             print("[pedirAnalise] Não apareceu botão 'PEDIR ANÁLISE' – ignorando.")
             return False
@@ -155,7 +153,6 @@ class WhatsAppPage:
 
                 raise ChipEmAnaliseException("❌ Chip já em análise")
             return True
-
         except TimeoutException:
             print("[verificarAnalise] Não apareceu botão de status de análise – ignorando.")
             return False
@@ -184,14 +181,9 @@ class WhatsAppPage:
                 except Exception as e:
 
                     print(f"[verificarChip] Erro ao aceitar condições: Não verificou o Chip")
-            return True
+
         except Exception as e:
             print(f"[verificarChip] Erro: Não verificou o Chip")
-
-            print(f"[verificarChip] Erro ao aceitar condições: {e}")
-            return True
-        except Exception as e:
-            print(f"[verificarChip] Erro: {e}")
 
             return False
 
@@ -288,7 +280,7 @@ class WhatsAppPage:
             campo_nome.send_keys("Call Center")
             print("colocou o nome")
             return True
-        except Exception as e:
+        except:
             print(f"[colocarNome] Erro: Não Colocou o Nome")
             return False
 

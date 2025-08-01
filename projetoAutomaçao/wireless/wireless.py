@@ -38,6 +38,7 @@ def conectar_dispositivos_por_ip(arquivo='ips_dispositivos.txt'):
                     res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                     print(f"Conectando {udid} ({ip}): {res.stdout.strip()}")
 
-if __name__ == "__main__":
+def wireless():
+#if __name__ == "__main__":
     buscar_ips_dispositivos()
     conectar_dispositivos_por_ip()

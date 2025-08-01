@@ -5,9 +5,8 @@ from appium.webdriver.appium_service import AppiumService
 from appium.options.android import UiAutomator2Options
 from appium import webdriver
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pages.smartphone import SmartphonePage
 from pages.wa_bussines import *
-from pages.whatsapp_page import *
+
 
 def pegar_udids():
     result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
@@ -15,6 +14,7 @@ def pegar_udids():
     udids = [line.split('\t')[0] for line in lines if 'device' in line]
     print(f"📱 Dispositivos conectados: {udids}")
     return udids
+
 
 def porta_livre(porta_inicial=4723):
     porta = porta_inicial
@@ -24,9 +24,11 @@ def porta_livre(porta_inicial=4723):
                 return porta
             porta += 2  # evita conflitos de porta paralelos
 
+
 def gerar_porta_por_udid(udid, base_porta=4723):
     hash_val = abs(hash(udid)) % 1000
     return base_porta + (hash_val * 2)
+
 
 def iniciar_appium(porta):
     service = AppiumService()
@@ -43,6 +45,7 @@ def iniciar_appium(porta):
         time.sleep(1)
 
     raise RuntimeError(f"❌ Falha ao iniciar Appium na porta {porta}")
+
 
 def criar_drivers_whatsapp_bussines(udid, porta):
     options = UiAutomator2Options()
@@ -62,6 +65,7 @@ def criar_drivers_whatsapp_bussines(udid, porta):
     )
     return driver
 
+
 # 🟢 Instância única para controle do serviço Appium
 def iniciar_appium_para_udid(udid, porta):
     """
@@ -76,42 +80,43 @@ def iniciar_appium_para_udid(udid, porta):
         print(f"❌ Erro ao iniciar Appium para {udid}: {e}")
         return (None, None)
 
+
 def rodar_automacao_whatsapp_bussines(driver):
     try:
         print(f"▶️ Iniciando automação no dispositivo: {driver.capabilities['deviceName']}")
-        whatsapp = WhatsAppPage(driver)
+        whatsappbussines = WaBussinesPage(driver)
         udid = driver.capabilities["deviceName"]
         print(f"📱 Iniciando automação para: {udid}")
-        numero = whatsapp.pegarNumeroChip1(udid)
-        whatsapp.selecionar_linguagem()
-        whatsapp.clicar_prosseguir()
-        whatsapp.inserir_numero(numero)
-        whatsapp.confirmarNumero()
-
+        numero = whatsappbussines.pegar_numero_chip2(udid)
+        whatsappbussines.aceitar_termos()
+        whatsappbussines.registrar_numero(numero)
+        time.sleep(1)
         parar = executar_paralelo(
-            whatsapp.verificarBanido,
-            whatsapp.verificarAnalise,
-            whatsapp.pedirAnalise,
-            whatsapp.verificarChip
+
+            whatsappbussines.verificar_banido,
+            whatsappbussines.verificar_analise,
+            whatsappbussines.colocar_em_analise
+            # whatsapp.verificarChip
         )
         if parar:
             print(f"⛔ Chip com problema detectado no dispositivo {udid}. Encerrando automação.")
             return
-
-        if whatsapp.abrirAppMensagens():
-            codigo = whatsapp.pegarCodigoSms()
-            whatsapp.voltarWhatsapp()
-            whatsapp.inserir_codigo_sms(codigo)
-            whatsapp.concluir_perfil()
-
-        whatsapp.aceitarPermissao()
-        whatsapp.colocarNome()
-        whatsapp.finalizarPerfil()
+        whatsappbussines.confirmar_chip()
+        if whatsappbussines.abrir_app_mensagens():
+            codigo = whatsappbussines.pegarCodigoSms()
+            whatsappbussines.colocar_codigo(codigo)
+        whatsappbussines.negar_backup()
+        whatsappbussines.colocar_nome()
+        whatsappbussines.selecionar_empresa()
+        whatsappbussines.horario_de_atendimento()
+        whatsappbussines.foto_perfil()
+        whatsappbussines.formas_encontrar_empresa()
 
         print(f"✅ Automação concluída para: {udid}")
 
     except Exception as e:
         print(f"❌ Erro no dispositivo {driver.capabilities['deviceName']}: {e}")
+
 
 def iniciar_ambiente_para_todos():
     """
@@ -133,7 +138,8 @@ def iniciar_ambiente_para_todos():
 
     return drivers_services
 
-if __name__ == "__main__":
+def bussines():
+#if __name__ == "__main__":
     drivers_services = iniciar_ambiente_para_todos()
     drivers = [ds[0] for ds in drivers_services if ds[0] is not None]
 

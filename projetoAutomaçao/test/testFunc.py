@@ -5,7 +5,7 @@
 from appium import webdriver
 from appium.options.common.base import AppiumOptions
 from appium.webdriver.common.appiumby import AppiumBy
-
+from pages.wa_bussines import *
 # For W3C actions
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions import interaction
@@ -17,14 +17,15 @@ options.load_capabilities({
 	"appium:platformName": "Android",
 	"appium:deviceName": "Android",
 	"appium:automationName": "UiAutomator2",
-	"appium:appPackage": "com.whatsapp.w4b",
-	"appium:appActivity": "com.whatsapp.HomeActivity",
+	#"appium:appPackage": "com.whatsapp.w4b",
+	#"appium:appActivity": "com.whatsapp.HomeActivity",
 	"appium:noReset": True,
 	"appium:newCommandTimeout": 3600,
 	"appium:connectHardwareKeyboard": True
 })
 
 driver = webdriver.Remote("http://127.0.0.1:4723/wd/hub", options=options)
+
 
 
 driver.quit()

@@ -122,7 +122,7 @@ def rodar_automacao_whatsapp(driver):
         whatsapp.clicar_prosseguir()
         whatsapp.inserir_numero(numero)
         whatsapp.confirmarNumero()
-
+        time.sleep(1)
         parar = executar_paralelo(
             whatsapp.verificarBanido,
             whatsapp.verificarAnalise,
@@ -149,8 +149,8 @@ def rodar_automacao_whatsapp(driver):
         print(f"❌ Erro no dispositivo {driver.capabilities['deviceName']}: {e}")
 
 
-
-if __name__ == "__main__":
+def whatsapp():
+#if __name__ == "__main__":
     drivers_services = iniciar_ambiente_para_todos()
     drivers = [ds[0] for ds in drivers_services if ds[0] is not None]
 
