@@ -1,3 +1,4 @@
+import os.path
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 from threading import Thread
@@ -6,6 +7,7 @@ import sys
 from drivers.drivers_whatsapp_bussines import *
 from drivers.drivers_whatsapp import *
 from wireless.wireless import *
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Lista de serviços de drivers (caso necessário)
 drivers_services = []
@@ -13,7 +15,7 @@ drivers_services = []
 # === Janela principal ===
 janela = tk.Tk()
 janela.title('Central de Recadastro')
-janela.geometry('600x400')
+janela.geometry('800x600')
 
 # Container principal
 container = tk.Frame(janela, bg="#f0f0f0")
